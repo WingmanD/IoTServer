@@ -1,39 +1,100 @@
 ﻿#include "Measurements.h"
 
-#include "../DB/DBStatics.h"
-#include "sqlite_orm/sqlite_orm.h"
+#include <drogon/HttpClient.h>
 
 void Measurements::GetAllMeasurements(const drogon::HttpRequestPtr& req,
-                                        std::function<void(const drogon::HttpResponsePtr&)>&& callback)
+                                      std::function<void(const drogon::HttpResponsePtr&)>&& callback)
 {
+    // todo ip:port
+    const auto client = drogon::HttpClient::newHttpClient("http://127.0.0.1:8080");
+
+    // todo access token
+    const std::string requestPath("/api/tenant/devices");
+
+    drogon::HttpRequestPtr request = drogon::HttpRequest::newHttpRequest();
+    request->setMethod(drogon::HttpMethod::Get);
+    request->setPath(requestPath);
+
+    const auto respPair = client->sendRequest(request);
+    const auto reqResult = respPair.first;
+    const auto& resp = respPair.second;
+    
+    if (reqResult != drogon::ReqResult::Ok) {
+        std::cerr << "Failed to retrieve device IDs: error " << reqResult << std::endl;
+        
+        const auto response = drogon::HttpResponse::newHttpResponse();
+        response->setStatusCode(drogon::HttpStatusCode::k500InternalServerError);
+        callback(response);
+    }
+
+    std::cout << "Device IDs retrieved successfully!" << std::endl;
+    std::cout << "Response body: " << resp->getBody() << std::endl;
+    
+    Json::Value deviceIDs;
+    Json::CharReaderBuilder builder;
+    std::unique_ptr<Json::CharReader> reader(builder.newCharReader());
+    std::string errors;
+    
+    if (!reader->parse(resp->getBody().data(), resp->getBody().data() + resp->getBody().size(), &deviceIDs, &errors))
+    {
+        std::cerr << "Failed to parse JSON" << std::endl;
+        
+        const auto response = drogon::HttpResponse::newHttpResponse();
+        response->setStatusCode(drogon::HttpStatusCode::k500InternalServerError);
+        callback(response);
+    }
+    
     Json::Value responseJson;
 
-    DBStatics::DBStorage.sync_schema();
-    
-    const auto allMeasurements = DBStatics::DBStorage.get_all<Measurement>();
-    
-    for (const auto& measurement : allMeasurements)
+    for (const auto& deviceID : deviceIDs)
     {
-        Json::Value measurementJson;
-        measurementJson["ID"] = measurement.ID;
-        measurementJson["Value"] = measurement.Value;
-        measurementJson["Timestamp"] = measurement.Timestamp;
-        responseJson.append(measurementJson);
+        const std::string deviceIDString = deviceID.asString();
+        std::cout << "Device ID: " << deviceIDString << std::endl;
+
+        // todo: access token
+        const std::string devicePath = "/api/v1/" + deviceIDString + "/telemetry";
+        
+        drogon::HttpRequestPtr deviceRequest = drogon::HttpRequest::newHttpRequest();
+        deviceRequest->setMethod(drogon::HttpMethod::Get);
+        deviceRequest->setPath(devicePath);
+        
+        const auto deviceRespPair = client->sendRequest(deviceRequest);
+        const auto deviceReqResult = deviceRespPair.first;
+        const auto& deviceResp = deviceRespPair.second;
+        
+        if (deviceReqResult != drogon::ReqResult::Ok) {
+            std::cerr << "Failed to retrieve device measurements: error " << deviceReqResult << std::endl;
+            
+            const auto response = drogon::HttpResponse::newHttpResponse();
+            response->setStatusCode(drogon::HttpStatusCode::k500InternalServerError);
+            callback(response);
+        }
+        
+        std::cout << "Device measurements retrieved successfully!" << std::endl;
+        std::cout << "Response body: " << deviceResp->getBody() << std::endl;
+        
+        Json::Value deviceMeasurements;
+        
+        if (!reader->parse(deviceResp->getBody().data(), deviceResp->getBody().data() + deviceResp->getBody().size(), &deviceMeasurements, &errors))
+        {
+            std::cerr << "Failed to parse JSON" << std::endl;
+            
+            const auto response = drogon::HttpResponse::newHttpResponse();
+            response->setStatusCode(drogon::HttpStatusCode::k500InternalServerError);
+            callback(response);
+        }
+
+        // todo parse
+        for (const auto& measurement : deviceMeasurements)
+        {
+            Json::Value measurementJson;
+            measurementJson["ID"] = measurement["ts"];
+            measurementJson["Value"] = measurement["value"];
+            measurementJson["Timestamp"] = measurement["ts"];
+            responseJson.append(measurementJson);
+        }
     }
 
     const auto response = drogon::HttpResponse::newHttpJsonResponse(responseJson);
-    callback(response);
-}
-
-void Measurements::AddMeasurement(const drogon::HttpRequestPtr& req,
-                                    std::function<void(const drogon::HttpResponsePtr&)>&& callback)
-{
-    DBStatics::DBStorage.sync_schema();
-    DBStatics::DBStorage.insert(Measurement{0, 0, "2020-01-01 01:00:00"});
-    DBStatics::DBStorage.sync_schema();
-    
-    const auto response = drogon::HttpResponse::newHttpResponse();
-    response->setStatusCode(drogon::k200OK);
-    
     callback(response);
 }

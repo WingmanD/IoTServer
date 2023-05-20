@@ -1,8 +1,8 @@
 #include <drogon/drogon.h>
 
-int main()
+int main(int argc, char* argv[])
 {
-    drogon::app().loadConfigFile("../Server/config.json");
+    drogon::app().loadConfigFile("bin/config.json");
 
     drogon::HttpAppFramework::instance()
         .registerHandler("/",
@@ -46,6 +46,6 @@ int main()
                          });
     
     drogon::app().run();
-
+    
     return 0;
 }

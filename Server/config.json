@@ -11,7 +11,7 @@
         "enable_session": true,
         "session_timeout": 1200,
         "session_same_site" : "Strict",
-        "document_root": "../Server/static",
+        "document_root": "static",
         "home_page": "index.html",
         "use_implicit_page": true,
         "implicit_page": "index.html",
@@ -47,7 +47,7 @@
         "max_connections_per_ip": 0,
         "load_dynamic_views": true,
         "dynamic_views_path": [
-            "../Server/views"
+            "views"
         ],
         "dynamic_views_output_path": "",
         "enable_unicode_escaping_in_json": true,

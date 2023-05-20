@@ -62,6 +62,7 @@ drogon_create_views(${PROJECT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/views
 target_include_directories(${PROJECT_NAME}
                            PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
                                    ${CMAKE_CURRENT_SOURCE_DIR}/models)
+                                   
 target_sources(${PROJECT_NAME}
                PRIVATE
                ${SRC_DIR}
@@ -76,16 +77,3 @@ set_property(TARGET ${PROJECT_NAME} PROPERTY ENABLE_EXPORTS ON)
 # ##############################################################################
 
 add_subdirectory(test)
-
-FILE(GLOB SCP_LIST ${CMAKE_CURRENT_SOURCE_DIR}/views/*.csp)
-foreach(cspFile ${SCP_LIST})
-    message(STATUS "cspFile:" ${cspFile})
-    EXEC_PROGRAM(basename ARGS "-s .csp ${cspFile}" OUTPUT_VARIABLE classname)
-    message(STATUS "view classname:" ${classname})
-    add_custom_command(OUTPUT ${classname}.h ${classname}.cc
-        COMMAND drogon_ctl
-        ARGS create view ${cspFile}
-        DEPENDS ${cspFile}
-        VERBATIM )
-   set(VIEWSRC ${VIEWSRC} ${classname}.cc)
-endforeach()
