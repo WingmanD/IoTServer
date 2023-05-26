@@ -9,6 +9,9 @@ int main(int argc, char* argv[])
                          [=](const drogon::HttpRequestPtr& req,
                              std::function<void (const drogon::HttpResponsePtr&)>&& callback)
                          {
+                             // todo redirect to dashboard controller which will handle data and views
+                             // instead of having this in main
+
                              auto params = req->getParameters();
                              auto cookies = req->getCookies();
 
@@ -40,7 +43,7 @@ int main(int argc, char* argv[])
                                      }
                                  }
                              }
-
+                             
                              const auto resp = drogon::HttpResponse::newHttpViewResponse("home.csp", data);
                              callback(resp);
                          });
