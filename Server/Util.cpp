@@ -7,7 +7,7 @@
 #include <chrono>
 #include <fmt/format.h>
 
-std::string Util::ThingsboardHost = "http://161.53.19.19:45080";
+std::string Util::ThingsBoardHost = "http://161.53.19.19:45080";
 
 Json::Value Util::ParseJson(const std::string& text)
 {
@@ -28,26 +28,26 @@ Json::Value Util::ParseJson(const std::string& text)
 
 std::string Util::Login(const std::string& username, const std::string& password)
 {
-    const auto client = drogon::HttpClient::newHttpClient(ThingsboardHost);
+    const auto client = drogon::HttpClient::newHttpClient(ThingsBoardHost);
 
     Json::Value requestJson;
     requestJson["username"] = username;
     requestJson["password"] = password;
 
-    const drogon::HttpRequestPtr loginRequest = drogon::HttpRequest::newHttpJsonRequest(requestJson);
-    loginRequest->setMethod(drogon::HttpMethod::Post);
-    loginRequest->setPath("/api/auth/login");
+    const drogon::HttpRequestPtr request = drogon::HttpRequest::newHttpJsonRequest(requestJson);
+    request->setMethod(drogon::HttpMethod::Post);
+    request->setPath("/api/auth/login");
 
-    const auto loginRespPair = client->sendRequest(loginRequest);
-    const auto loginReqResult = loginRespPair.first;
-    const auto& loginResponse = loginRespPair.second;
+    const auto respPair = client->sendRequest(request);
+    const auto reqResult = respPair.first;
+    const auto& resp = respPair.second;
 
-    if (loginReqResult != drogon::ReqResult::Ok)
+    if (reqResult != drogon::ReqResult::Ok)
     {
         return "";
     }
 
-    const Json::Value loginResponseJson = *loginResponse->getJsonObject();
+    const Json::Value loginResponseJson = *resp->getJsonObject();
 
     return loginResponseJson["token"].asString();
 }
@@ -68,13 +68,35 @@ Json::Value Util::GetDeviceTelemetry(const std::string& token, const std::string
     const auto value = std::chrono::duration_cast<std::chrono::milliseconds>(epoch);
     const auto endTs = value.count();
 
-    const drogon::HttpRequestPtr telemetryRequest = drogon::HttpRequest::newHttpRequest();
-    telemetryRequest->setMethod(drogon::HttpMethod::Get);
-    telemetryRequest->setPath(fmt::format("/api/plugins/telemetry/DEVICE/{}/values/timeseries?keys={}&startTs={}&endTs={}&limit={}&agg=NONE", deviceId, keys, startTs, endTs, limit));
-    telemetryRequest->addHeader("X-Authorization", "Bearer " + token);
+    const drogon::HttpRequestPtr request = drogon::HttpRequest::newHttpRequest();
+    request->setMethod(drogon::HttpMethod::Get);
+    request->setPath(fmt::format("/api/plugins/telemetry/DEVICE/{}/values/timeseries?keys={}&startTs={}&endTs={}&limit={}&agg=NONE", deviceId, keys, startTs, endTs, limit));
+    request->addHeader("X-Authorization", "Bearer " + token);
 
-    const auto client = drogon::HttpClient::newHttpClient(ThingsboardHost);
-    const auto respPair = client->sendRequest(telemetryRequest);
+    const auto client = drogon::HttpClient::newHttpClient(ThingsBoardHost);
+    const auto respPair = client->sendRequest(request);
+    const auto& resp = respPair.second;
+
+    return *resp->getJsonObject();
+}
+
+Json::Value Util::GetDeviceAlarms(const std::string& token, const std::string& deviceId)
+{
+    if (token.empty())
+    {
+        return {};
+    }
+
+    constexpr int pageSize = 10;
+    constexpr int page = 0;
+    
+    const drogon::HttpRequestPtr request = drogon::HttpRequest::newHttpRequest();
+    request->setMethod(drogon::HttpMethod::Get);
+    request->setPath(fmt::format("/api/alarm/DEVICE/{}?pageSize={}&page={}", deviceId, pageSize, page));
+    request->addHeader("X-Authorization", "Bearer " + token);
+
+    const auto client = drogon::HttpClient::newHttpClient(ThingsBoardHost);
+    const auto respPair = client->sendRequest(request);
     const auto& resp = respPair.second;
 
     return *resp->getJsonObject();
