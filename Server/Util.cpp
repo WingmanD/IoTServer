@@ -4,6 +4,8 @@
 #include <drogon/HttpClient.h>
 #include <json/reader.h>
 #include <json/value.h>
+#include <chrono>
+#include <fmt/format.h>
 
 std::string Util::ThingsboardHost = "http://161.53.19.19:45080";
 
@@ -54,17 +56,26 @@ Json::Value Util::GetDeviceTelemetry(const std::string& token, const std::string
 {
     if (token.empty())
     {
-        return Json::Value();
+        return {};
     }
-    
+
+    constexpr int64_t startTs = 0;
+    constexpr int limit = 10;
+
+    const auto now = std::chrono::system_clock::now();
+    const auto nowMs = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
+    const auto epoch = nowMs.time_since_epoch();
+    const auto value = std::chrono::duration_cast<std::chrono::milliseconds>(epoch);
+    const auto endTs = value.count();
+
     const drogon::HttpRequestPtr telemetryRequest = drogon::HttpRequest::newHttpRequest();
     telemetryRequest->setMethod(drogon::HttpMethod::Get);
-    telemetryRequest->setPath("/api/plugins/telemetry/DEVICE/" + deviceId + "/values/timeseries?keys=" + keys);
+    telemetryRequest->setPath(fmt::format("/api/plugins/telemetry/DEVICE/{}/values/timeseries?keys={}&startTs={}&endTs={}&limit={}&agg=NONE", deviceId, keys, startTs, endTs, limit));
     telemetryRequest->addHeader("X-Authorization", "Bearer " + token);
 
     const auto client = drogon::HttpClient::newHttpClient(ThingsboardHost);
     const auto respPair = client->sendRequest(telemetryRequest);
     const auto& resp = respPair.second;
-    
-   return *resp->getJsonObject();
+
+    return *resp->getJsonObject();
 }

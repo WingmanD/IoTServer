@@ -5,7 +5,8 @@
 %>
 <%c++ 
     auto params = @@.get<std::unordered_map<std::string,std::string>>("params");
-    auto user = @@.get<Json::Value>("user");
+    auto username = @@.get<std::string>("username");
+    auto telemetry = @@.get<Json::Value>("telemetry");
 %>
 <head>
     <meta charset="UTF-8">
@@ -30,13 +31,13 @@
                     <a class="nav-link" href="/">Home <span class="sr-only">(current)</span></a>
                 </li>
             </ul>
-            <%c++ if (user.empty()) {%>
+            <%c++ if (username.empty()) {%>
             <span class="navbar-text">
-                <a class="nav-link" href="/login">Login</a>
+                <a class="nav-link" href="/auth/login">Login</a>
             </span>
             <%c++ } else {%>
             <span class="navbar-text">
-                <a class="nav-link" href="/logout">{% user["userinfo"]["given_name"] %} Logout</a>
+                <a class="nav-link" href="" onclick="logout();return false;">{% username %} Logout</a>
             </span>
             <%c++ } %>
         </div>
@@ -45,6 +46,30 @@
 <div class="container align-content-center blur">
     <br>
     <h1>Dashboard</h1>
+    <br>
+    <div class="container">
+        <%c++ if (username.empty()) {%>
+                <span>Sensor telemetry not found!</span>        
+        <%c++ } else {%>
+                <span>Sensor telemetry: </span>
+                <p> {% telemetry.toStyledString() %} </p>
+        <%c++ } %>
+    </div>
 </div>
 </body>
 </html>
+
+<script>
+function DeleteCookie(name) {
+    console.log("before: ");
+    console.log(document.cookie);
+    document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:01 GMT;path=/;';
+    console.log(document.cookie);
+}
+
+function logout() {
+    DeleteCookie("username");
+    DeleteCookie("jwt");
+    location.reload();
+}
+</script>

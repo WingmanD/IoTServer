@@ -22,7 +22,8 @@ std::string home::genText(const DrTemplateData& home_view_data)
 	std::string layoutName{""};
  
     auto params = home_view_data.get<std::unordered_map<std::string,std::string>>("params");
-    auto user = home_view_data.get<Json::Value>("user");
+    auto username = home_view_data.get<std::string>("username");
+    auto telemetry = home_view_data.get<Json::Value>("telemetry");
 	home_tmp_stream << "<head>\n";
 	home_tmp_stream << "    <meta charset=\"UTF-8\">\n";
 	home_tmp_stream << "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n";
@@ -47,15 +48,15 @@ home_tmp_stream<<"\n";
 	home_tmp_stream << "                </li>\n";
 	home_tmp_stream << "            </ul>\n";
 	home_tmp_stream << "            ";
- if (user.empty()) {
+ if (username.empty()) {
 	home_tmp_stream << "            <span class=\"navbar-text\">\n";
-	home_tmp_stream << "                <a class=\"nav-link\" href=\"/login\">Login</a>\n";
+	home_tmp_stream << "                <a class=\"nav-link\" href=\"/auth/login\">Login</a>\n";
 	home_tmp_stream << "            </span>\n";
 	home_tmp_stream << "            ";
  } else {
 	home_tmp_stream << "            <span class=\"navbar-text\">\n";
-	home_tmp_stream << "                <a class=\"nav-link\" href=\"/logout\">";
-home_tmp_stream<<user["userinfo"]["given_name"];
+	home_tmp_stream << "                <a class=\"nav-link\" href=\"\" onclick=\"logout();return false;\">";
+home_tmp_stream<<username;
 	home_tmp_stream << " Logout</a>\n";
 	home_tmp_stream << "            </span>\n";
 	home_tmp_stream << "            ";
@@ -66,9 +67,38 @@ home_tmp_stream<<user["userinfo"]["given_name"];
 	home_tmp_stream << "<div class=\"container align-content-center blur\">\n";
 	home_tmp_stream << "    <br>\n";
 	home_tmp_stream << "    <h1>Dashboard</h1>\n";
+	home_tmp_stream << "    <br>\n";
+	home_tmp_stream << "    <div class=\"container\">\n";
+	home_tmp_stream << "        ";
+ if (username.empty()) {
+	home_tmp_stream << "                <span>Sensor telemetry not found!</span>        \n";
+	home_tmp_stream << "        ";
+ } else {
+	home_tmp_stream << "                <span>Sensor telemetry: </span>\n";
+	home_tmp_stream << "                <p> ";
+home_tmp_stream<<telemetry.toStyledString();
+	home_tmp_stream << " </p>\n";
+	home_tmp_stream << "        ";
+ } 
+	home_tmp_stream << "    </div>\n";
 	home_tmp_stream << "</div>\n";
 	home_tmp_stream << "</body>\n";
 	home_tmp_stream << "</html>\n";
+home_tmp_stream<<"\n";
+	home_tmp_stream << "<script>\n";
+	home_tmp_stream << "function DeleteCookie(name) {\n";
+	home_tmp_stream << "    console.log(\"before: \");\n";
+	home_tmp_stream << "    console.log(document.cookie);\n";
+	home_tmp_stream << "    document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:01 GMT;path=/;';\n";
+	home_tmp_stream << "    console.log(document.cookie);\n";
+	home_tmp_stream << "}\n";
+home_tmp_stream<<"\n";
+	home_tmp_stream << "function logout() {\n";
+	home_tmp_stream << "    DeleteCookie(\"username\");\n";
+	home_tmp_stream << "    DeleteCookie(\"jwt\");\n";
+	home_tmp_stream << "    location.reload();\n";
+	home_tmp_stream << "}\n";
+	home_tmp_stream << "</script>\n";
 if(layoutName.empty())
 {
 std::string ret{std::move(home_tmp_stream.str())};
