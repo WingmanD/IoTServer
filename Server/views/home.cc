@@ -23,7 +23,6 @@ std::string home::genText(const DrTemplateData& home_view_data)
  
     auto params = home_view_data.get<std::unordered_map<std::string,std::string>>("params");
     auto username = home_view_data.get<std::string>("username");
-    auto telemetry = home_view_data.get<Json::Value>("telemetry");
 	home_tmp_stream << "<head>\n";
 	home_tmp_stream << "    <meta charset=\"UTF-8\">\n";
 	home_tmp_stream << "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n";
@@ -69,23 +68,25 @@ home_tmp_stream<<username;
 	home_tmp_stream << "    <h1>Dashboard</h1>\n";
 	home_tmp_stream << "    <br>\n";
 	home_tmp_stream << "    <div class=\"container\">\n";
-	home_tmp_stream << "        ";
- if (username.empty()) {
-	home_tmp_stream << "                <span>Sensor telemetry not found!</span>        \n";
-	home_tmp_stream << "        ";
- } else {
-	home_tmp_stream << "                <span>Sensor telemetry: </span>\n";
-	home_tmp_stream << "                <p> ";
-home_tmp_stream<<telemetry.toStyledString();
-	home_tmp_stream << " </p>\n";
-	home_tmp_stream << "        ";
- } 
+	home_tmp_stream << "        <span id=\"chError\"></span>\n";
 	home_tmp_stream << "    </div>\n";
 	home_tmp_stream << "</div>\n";
 	home_tmp_stream << "</body>\n";
 	home_tmp_stream << "</html>\n";
 home_tmp_stream<<"\n";
 	home_tmp_stream << "<script>\n";
+	home_tmp_stream << "async function LoadTelemetry() {\n";
+	home_tmp_stream << "    var telemetry = await (await fetch(\"/measurements/\")).json();\n";
+	home_tmp_stream << "    var err = document.getElementById(\"chError\");\n";
+home_tmp_stream<<"\n";
+	home_tmp_stream << "    if (telemetry.errorCode) {\n";
+	home_tmp_stream << "        err.textContent = `${telemetry.status}[${telemetry.errorCode}]: ${telemetry.message}`;\n";
+	home_tmp_stream << "        return;\n";
+	home_tmp_stream << "    }\n";
+home_tmp_stream<<"\n";
+	home_tmp_stream << "    err.remove();\n";
+	home_tmp_stream << "}\n";
+home_tmp_stream<<"\n";
 	home_tmp_stream << "function DeleteCookie(name) {\n";
 	home_tmp_stream << "    document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:01 GMT;path=/;';\n";
 	home_tmp_stream << "}\n";
@@ -95,6 +96,8 @@ home_tmp_stream<<"\n";
 	home_tmp_stream << "    DeleteCookie(\"jwt\");\n";
 	home_tmp_stream << "    location.reload();\n";
 	home_tmp_stream << "}\n";
+home_tmp_stream<<"\n";
+	home_tmp_stream << "document.addEventListener(\"DOMContentLoaded\", LoadTelemetry);\n";
 	home_tmp_stream << "</script>\n";
 if(layoutName.empty())
 {

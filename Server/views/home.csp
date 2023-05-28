@@ -6,7 +6,6 @@
 <%c++ 
     auto params = @@.get<std::unordered_map<std::string,std::string>>("params");
     auto username = @@.get<std::string>("username");
-    auto telemetry = @@.get<Json::Value>("telemetry");
 %>
 <head>
     <meta charset="UTF-8">
@@ -48,18 +47,25 @@
     <h1>Dashboard</h1>
     <br>
     <div class="container">
-        <%c++ if (username.empty()) {%>
-                <span>Sensor telemetry not found!</span>        
-        <%c++ } else {%>
-                <span>Sensor telemetry: </span>
-                <p> {% telemetry.toStyledString() %} </p>
-        <%c++ } %>
+        <span id="chError"></span>
     </div>
 </div>
 </body>
 </html>
 
 <script>
+async function LoadTelemetry() {
+    var telemetry = await (await fetch("/measurements/")).json();
+    var err = document.getElementById("chError");
+
+    if (telemetry.errorCode) {
+        err.textContent = `${telemetry.status}[${telemetry.errorCode}]: ${telemetry.message}`;
+        return;
+    }
+
+    err.remove();
+}
+
 function DeleteCookie(name) {
     document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:01 GMT;path=/;';
 }
@@ -69,4 +75,6 @@ function logout() {
     DeleteCookie("jwt");
     location.reload();
 }
+
+document.addEventListener("DOMContentLoaded", LoadTelemetry);
 </script>
