@@ -18,6 +18,7 @@ void Auth::PostLogin(const drogon::HttpRequestPtr& req,
         const auto resp = drogon::HttpResponse::newHttpResponse();
         resp->setStatusCode(drogon::HttpStatusCode::k400BadRequest);
         callback(resp);
+        return;
     }
 
     const std::string token = Util::Login(username, password);
@@ -27,6 +28,7 @@ void Auth::PostLogin(const drogon::HttpRequestPtr& req,
         const auto resp = drogon::HttpResponse::newHttpResponse();
         resp->setStatusCode(drogon::HttpStatusCode::k401Unauthorized);
         callback(resp);
+        return;
     }
 
     drogon::Cookie jwtCookie("jwt", token);
