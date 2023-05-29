@@ -12,32 +12,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
           integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <link rel="stylesheet" href="/main.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@1.0.1/dist/chartjs-adapter-moment.min.js"></script>
-    <title>Water Leak Dashboard</title>
-    <style>
-        .container {
-            display: flex;
-            flex-wrap: wrap;
-        }
-
-        .chart {
-            flex: 0 0 auto;
-            width: 50%;
-            height: 400px;
-        }
-
-        @media (max-width: 992px) {
-            .container {
-                flex-direction: column;
-            }
-
-            .chart {
-                width: 100%;
-            }
-        }
-    </style>    
+    <title>Water Leak Dashboard</title>   
 </head>
 
 <body>

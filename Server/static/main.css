@@ -1,0 +1,20 @@
+﻿.container {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.chart {
+    flex: 0 0 auto;
+    width: 50%;
+    height: 400px;
+}
+
+@media (max-width: 992px) {
+    .container {
+        flex-direction: column;
+    }
+
+    .chart {
+        width: 100%;
+    }
+}
