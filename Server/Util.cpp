@@ -8,6 +8,9 @@
 #include <fmt/format.h>
 
 std::string Util::ThingsBoardHost = "http://161.53.19.19:45080";
+std::string Util::SensorDeviceId = "564a8980-f58e-11ed-993d-8d74c2abdddd";
+std::string Util::VirtualDeviceAccessToken = "0fPIFyn0CVshpSEzlfDn";
+int Util::RequiredTemperatureForTurningOff = 60;
 
 Json::Value Util::ParseJson(const std::string& text)
 {
@@ -28,6 +31,11 @@ Json::Value Util::ParseJson(const std::string& text)
 
 std::string Util::Login(const std::string& username, const std::string& password)
 {
+    if (username.empty() || password.empty())
+    {
+        return "";
+    }
+    
     const auto client = drogon::HttpClient::newHttpClient(ThingsBoardHost);
 
     Json::Value requestJson;
@@ -47,14 +55,14 @@ std::string Util::Login(const std::string& username, const std::string& password
         return "";
     }
 
-    const Json::Value loginResponseJson = *resp->getJsonObject();
+    const Json::Value loginResponseJson = resp->getJsonObject() ? *resp->getJsonObject() : Json::Value();
 
     return loginResponseJson["token"].asString();
 }
 
 Json::Value Util::GetDeviceTelemetry(const std::string& token, const std::string& deviceId, const std::string& keys)
 {
-    if (token.empty())
+    if (token.empty() || deviceId.empty())
     {
         return {};
     }
@@ -77,12 +85,31 @@ Json::Value Util::GetDeviceTelemetry(const std::string& token, const std::string
     const auto respPair = client->sendRequest(request);
     const auto& resp = respPair.second;
 
-    return *resp->getJsonObject();
+    return resp->getJsonObject() ? *resp->getJsonObject() : Json::Value();
+}
+
+Json::Value Util::GetDeviceCurrentTelemetry(const std::string& token, const std::string& deviceId,const std::string& keys)
+{
+    if (token.empty() || deviceId.empty())
+    {
+        return {};
+    }
+
+    const drogon::HttpRequestPtr request = drogon::HttpRequest::newHttpRequest();
+    request->setMethod(drogon::HttpMethod::Get);
+    request->setPath(fmt::format("/api/plugins/telemetry/DEVICE/{}/values/timeseries?keys={}", deviceId, keys));
+    request->addHeader("X-Authorization", "Bearer " + token);
+
+    const auto client = drogon::HttpClient::newHttpClient(ThingsBoardHost);
+    const auto respPair = client->sendRequest(request);
+    const auto& resp = respPair.second;
+
+    return resp->getJsonObject() ? *resp->getJsonObject() : Json::Value();
 }
 
 Json::Value Util::GetDeviceAlarms(const std::string& token, const std::string& deviceId)
 {
-    if (token.empty())
+    if (token.empty() || deviceId.empty())
     {
         return {};
     }
@@ -99,5 +126,44 @@ Json::Value Util::GetDeviceAlarms(const std::string& token, const std::string& d
     const auto respPair = client->sendRequest(request);
     const auto& resp = respPair.second;
 
-    return *resp->getJsonObject();
+    return resp->getJsonObject() ? *resp->getJsonObject() : Json::Value();
+}
+
+Json::Value Util::GetDeviceAttributes(const std::string& token, const std::string& deviceAccessToken, const std::string& attributes)
+{
+    if (token.empty() || deviceAccessToken.empty() || attributes.empty())
+    {
+        return {};
+    }
+    
+    const drogon::HttpRequestPtr request = drogon::HttpRequest::newHttpRequest();
+    request->setMethod(drogon::HttpMethod::Get);
+    request->setPath(fmt::format("/api/v1/{}/attributes?clientKeys={}&sharedKeys=-", deviceAccessToken, attributes));
+    request->addHeader("X-Authorization", "Bearer " + token);
+
+    const auto client = drogon::HttpClient::newHttpClient(ThingsBoardHost);
+    const auto respPair = client->sendRequest(request);
+    const auto& resp = respPair.second;
+
+    return resp->getJsonObject() ? *resp->getJsonObject() : Json::Value();
+}
+
+drogon::HttpStatusCode Util::PostDeviceAttributes(const std::string& token, const std::string& deviceAccessToken, const Json::Value& attributes)
+{
+    if (token.empty() || deviceAccessToken.empty() || attributes.empty())
+    {
+        return drogon::HttpStatusCode::k400BadRequest;
+    }
+
+    const drogon::HttpRequestPtr request = drogon::HttpRequest::newHttpRequest();
+    request->setMethod(drogon::HttpMethod::Post);
+    request->setPath(fmt::format("/api/v1/{}/attributes", deviceAccessToken));
+    request->setBody(attributes.toStyledString());
+    request->addHeader("X-Authorization", "Bearer " + token);
+
+    const auto client = drogon::HttpClient::newHttpClient(ThingsBoardHost);
+    const auto respPair = client->sendRequest(request);
+    const auto& resp = respPair.second;
+    
+    return resp->statusCode();
 }
