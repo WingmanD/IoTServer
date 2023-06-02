@@ -134,7 +134,7 @@ void Measurements::PostDeviceStatus(const drogon::HttpRequestPtr& req, std::func
     const std::string temp = telemetry["temperature"][0]["value"].asString();
     const int temperature = std::stoi(temp);
 
-    if (temperature > Util::RequiredTemperatureForTurningOff)
+    if (temperature < Util::RequiredTemperatureForTurningOff)
     {
         const auto response = drogon::HttpResponse::newHttpResponse();
         response->setStatusCode(drogon::HttpStatusCode::k403Forbidden);
