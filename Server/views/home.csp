@@ -50,8 +50,6 @@
 </nav>
 <div class="container align-content-center blur">
     <br>
-    <h1>Dashboard</h1>
-    <br>
     <h2>Alarms</h2>
     <br>
     <div class="row">
@@ -65,8 +63,9 @@
             <span></span>
         </div>
     </div>
-    <br>
+    <br><br>
     <h2>Devices</h2>
+    <br>
     <div class="row align-items-center d-none" id="devcontainer">
         <div class="col-auto text-end">
             Virtual Device
@@ -74,7 +73,7 @@
         <div class="col-auto" id="devstatus"></div>
         <div class="col"><button id="devdisable">❌ Shut down</button></div>
     </div>
-    <br>
+    <br><br>
     <h2>Measurement History</h2>
     <br>
     <div class="row">
@@ -104,6 +103,7 @@ async function LoadAlarms() {
     var alarms = await (await fetch("/alarm/")).json();
     var err = document.getElementById("alError");
     var errRow = document.getElementById("alErrorRow");
+    var base = document.getElementById("alarmBase");
 
     if (alarms.errorCode) {
         err.textContent = `${alarms.status}[${alarms.errorCode}]: ${alarms.message}`;
@@ -122,8 +122,6 @@ async function LoadAlarms() {
     errRow.remove();
 
     alarms.sort((a, b) => b.createdTime - a.createdTime);
-    
-    var base = document.getElementById("alarmBase");
 
     for (const alarm of alarms) {
         var elem = base.cloneNode(true);
