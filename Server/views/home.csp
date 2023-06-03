@@ -59,11 +59,20 @@
     </div>
     <div class="row align-items-center" id="alarmBase">
         <div class="col-auto">
-            <button>❌</button>
+            <button>❌ Dismiss</button>
         </div>
         <div class="col">
             <span></span>
         </div>
+    </div>
+    <br>
+    <h2>Devices</h2>
+    <div class="row align-items-center d-none" id="devcontainer">
+        <div class="col-auto text-end">
+            Virtual Device
+        </div>
+        <div class="col-auto" id="devstatus"></div>
+        <div class="col"><button id="devdisable">❌ Shut down</button></div>
     </div>
     <br>
     <h2>Measurement History</h2>
@@ -77,21 +86,20 @@
             <canvas id="chTemperature"></canvas>
         </div>
     </div>
-    <br>
-    <h2>Status</h2>
-    <div class="row">
-        <div class="col-auto text-end">
-            Measurements
-        </div>
-        <div class="col-auto" id="statusMeasurements"></div>
-        <div class="col"></div>
-    </div>
-    <br>
 </div>
 </body>
 </html>
 
 <script>
+async function POST_reload(url) {
+    var res = await fetch(url, { method: 'POST' });
+    if (res.status == 200) location.reload();
+    else {
+        alert(`${url} returned ${res.status}`);
+        console.log(res);
+    }
+}
+
 async function LoadAlarms() {
     var alarms = await (await fetch("/alarm/")).json();
     var err = document.getElementById("alError");
@@ -120,22 +128,27 @@ async function LoadAlarms() {
     for (const alarm of alarms) {
         var elem = base.cloneNode(true);
         elem.removeAttribute("id");
-        elem.children[0].children[0].onclick = async function() {
-            var res = await fetch(
-                "/alarm/clear?id=" + alarm.id.id,
-                { method: 'POST' }
-            );
-            if (res.status == 200) location.reload();
-            else {
-                alert("res.status");
-                console.log(alarm.id.id, res);
-            }
-        };
+        elem.children[0].children[0].onclick = async () => await POST_reload(`/alarm/clear?id=${alarm.id.id}`);
         elem.children[1].children[0].textContent = `${new Date(alarm.createdTime).toLocaleString()}: ${alarm.severity} - ${alarm.name}`;
         base.after(elem);
     }
 
     base.remove();
+}
+
+async function LoadStatus() {
+    var measurements = await (await fetch("/measurements/status")).json();
+    document.getElementById("devstatus").textContent = measurements.client.active? "🟢 Active" : "🔴 Inactive";
+    
+    var btn = document.getElementById("devdisable");
+
+    if (measurements.canDisable) {
+        btn.onclick = async () => await POST_reload("/measurements/status?active=false");
+    } else {
+        btn.remove();
+    }
+
+    document.getElementById("devcontainer").classList.remove("d-none");
 }
 
 async function LoadMeasurements() {
@@ -162,11 +175,6 @@ async function LoadMeasurements() {
     );
 }
 
-async function LoadStatus() {
-    var measurements = await (await fetch("/measurements/status")).json();
-    document.getElementById("statusMeasurements").textContent = measurements.client.active? "🟢 Active" : "🔴 Inactive";
-}
-
 function DeleteCookie(name) {
     document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:01 GMT;path=/;';
 }
@@ -178,6 +186,6 @@ function logout() {
 }
 
 document.addEventListener("DOMContentLoaded", LoadAlarms);
-document.addEventListener("DOMContentLoaded", LoadMeasurements);
 document.addEventListener("DOMContentLoaded", LoadStatus);
+document.addEventListener("DOMContentLoaded", LoadMeasurements);
 </script>

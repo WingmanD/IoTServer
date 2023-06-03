@@ -95,7 +95,7 @@ void Measurements::GetDeviceStatus(const drogon::HttpRequestPtr& req, std::funct
         return;
     }
     
-    const Json::Value attributeValues = Util::GetDeviceAttributes(cookies["jwt"], Util::VirtualDeviceAccessToken, "active");
+    Json::Value attributeValues = Util::GetDeviceAttributes(cookies["jwt"], Util::VirtualDeviceAccessToken, "active");
     if (attributeValues.empty())
     {
         const auto response = drogon::HttpResponse::newHttpResponse();
@@ -103,7 +103,21 @@ void Measurements::GetDeviceStatus(const drogon::HttpRequestPtr& req, std::funct
         callback(response);
         return;
     }
-    
+
+    const Json::Value telemetry = Util::GetDeviceCurrentTelemetry(cookies["jwt"], Util::SensorDeviceId, "temperature");
+    if (telemetry.empty())
+    {
+        const auto response = drogon::HttpResponse::newHttpResponse();
+        response->setStatusCode(drogon::HttpStatusCode::k500InternalServerError);
+        callback(response);
+        return;
+    }
+
+    const std::string temp = telemetry["temperature"][0]["value"].asString();
+    const int temperature = std::stoi(temp);
+
+    attributeValues["canDisable"] = temperature >= Util::RequiredTemperatureForTurningOff;
+
     const auto response = drogon::HttpResponse::newHttpJsonResponse(attributeValues);
     callback(response);
 }
@@ -127,9 +141,6 @@ void Measurements::PostDeviceStatus(const drogon::HttpRequestPtr& req, std::func
         callback(response);
         return;
     }
-
-    std::cout << "Telemetry: " << telemetry << std::endl;
-    std::cout << "Temperature: " << telemetry["temperature"][0]["value"] << std::endl;
 
     const std::string temp = telemetry["temperature"][0]["value"].asString();
     const int temperature = std::stoi(temp);
