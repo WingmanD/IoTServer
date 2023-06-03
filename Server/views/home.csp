@@ -10,12 +10,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="refresh" content="300">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
           integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
     <link rel="stylesheet" href="/main.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@1.0.1/dist/chartjs-adapter-moment.min.js"></script>
+    <script src="/renderchart.js"></script>
     <title>Water Leak Dashboard</title>   
 </head>
 
@@ -50,75 +52,93 @@
     <br>
     <h1>Dashboard</h1>
     <br>
-    <div class="container">
+    <h2>Alarms</h2>
+    <br>
+    <div class="row">
+        <span id="alError"></span>
+    </div>
+    <div class="row align-items-center" id="alarmBase">
+        <div class="col-auto">
+            <button>❌</button>
+        </div>
+        <div class="col">
+            <span></span>
+        </div>
+    </div>
+    <br>
+    <h2>Measurement History</h2>
+    <br>
+    <div class="row">
         <span id="chError"></span>
-
-        <div class="chart">
+        <div class="col">
             <canvas id="chHumidity"></canvas>
         </div>
-        <div class="chart">
+        <div class="col">
             <canvas id="chTemperature"></canvas>
         </div>
     </div>
+    <br>
+    <h2>Status</h2>
+    <div class="row">
+        <div class="col-auto text-end">
+            Measurements
+        </div>
+        <div class="col-auto" id="statusMeasurements"></div>
+        <div class="col"></div>
+    </div>
+    <br>
 </div>
 </body>
 </html>
 
 <script>
-function RenderChart(ch, data, title, unit, min = undefined, max = undefined) {
-    return new Chart(ch, {
-        type: "line",
-        maintainAspectRatio: false,
-        responsive: true,
-        data: {
-            labels: data.map(i => i.ts),
-            datasets: [{
-                data: data.map(i => i.value),
-                fill: false,
-                borderColor: 'rgb(75, 192, 192)',
-                tension: 0.125
-            }]
-        },
-        options: {
-            scales: {
-                x: {
-                    type: 'time',
-                    time: {
-                        unit: 'hour'
-                    },
-                    title: {
-                        display: true,
-                        text: 'Time'
-                    }
-                },
-                y: {
-                    display: true,
-                    title: {
-                        display: true,
-                        text: title
-                    },
-                    min: min,
-                    max: max,
-                    ticks: {
-                        callback: (value, index, values) => value + unit
-                    }
-                }
-            },
-            tooltips: {
-                callbacks: {
-                    label: value => value + unit
-                }
-            },
-            plugins: {
-                legend: {
-                    display: false
-                }
+async function LoadAlarms() {
+    var alarms = await (await fetch("/alarm/")).json();
+    var err = document.getElementById("alError");
+    var errRow = document.getElementById("alErrorRow");
+
+    if (alarms.errorCode) {
+        err.textContent = `${alarms.status}[${alarms.errorCode}]: ${alarms.message}`;
+        base.remove();
+        return;
+    }
+
+    alarms = alarms.data.filter(i => i.status === "ACTIVE_UNACK");
+    
+    if (alarms.length == 0) {
+        err.textContent = "There are no active alarms at this time.";
+        base.remove();
+        return;
+    }
+
+    errRow.remove();
+
+    alarms.sort((a, b) => b.createdTime - a.createdTime);
+    
+    var base = document.getElementById("alarmBase");
+
+    for (const alarm of alarms) {
+        var elem = base.cloneNode(true);
+        elem.removeAttribute("id");
+        elem.children[0].children[0].onclick = async function() {
+            var res = await fetch(
+                "/alarm/clear?id=" + alarm.id.id,
+                { method: 'POST' }
+            );
+            if (res.status == 200) location.reload();
+            else {
+                alert("res.status");
+                console.log(alarm.id.id, res);
             }
-        }
-    });
+        };
+        elem.children[1].children[0].textContent = `${new Date(alarm.createdTime).toLocaleString()}: ${alarm.severity} - ${alarm.name}`;
+        base.after(elem);
+    }
+
+    base.remove();
 }
 
-async function LoadTelemetry() {
+async function LoadMeasurements() {
     var telemetry = await (await fetch("/measurements/")).json();
     var err = document.getElementById("chError");
 
@@ -142,6 +162,11 @@ async function LoadTelemetry() {
     );
 }
 
+async function LoadStatus() {
+    var measurements = await (await fetch("/measurements/status")).json();
+    document.getElementById("statusMeasurements").textContent = measurements.client.active? "🟢 Active" : "🔴 Inactive";
+}
+
 function DeleteCookie(name) {
     document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:01 GMT;path=/;';
 }
@@ -152,5 +177,7 @@ function logout() {
     location.reload();
 }
 
-document.addEventListener("DOMContentLoaded", LoadTelemetry);
+document.addEventListener("DOMContentLoaded", LoadAlarms);
+document.addEventListener("DOMContentLoaded", LoadMeasurements);
+document.addEventListener("DOMContentLoaded", LoadStatus);
 </script>

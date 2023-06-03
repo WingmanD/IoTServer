@@ -3,6 +3,30 @@
 #include <fmt/format.h>
 #include <drogon/HttpClient.h>
 
+void Alarm::GetAllAlarms(const drogon::HttpRequestPtr& req, std::function<void(const drogon::HttpResponsePtr&)>&& callback)
+{
+    auto cookies = req->getCookies();
+    if (!cookies.contains("jwt") || !cookies.contains("username"))
+    {
+        const auto response = drogon::HttpResponse::newHttpResponse();
+        response->setStatusCode(drogon::HttpStatusCode::k401Unauthorized);
+        callback(response);
+        return;
+    }
+
+    const Json::Value alarms = Util::GetDeviceAlarms(cookies["jwt"], Util::SensorDeviceId);
+    if (alarms.empty())
+    {
+        const auto response = drogon::HttpResponse::newHttpResponse();
+        response->setStatusCode(drogon::HttpStatusCode::k500InternalServerError);
+        callback(response);
+        return;
+    }
+
+    const auto response = drogon::HttpResponse::newHttpJsonResponse(alarms);
+    callback(response);
+}
+
 void Alarm::Clear(const drogon::HttpRequestPtr& req, std::function<void(const drogon::HttpResponsePtr&)>&& callback)
 {
     auto cookies = req->getCookies();

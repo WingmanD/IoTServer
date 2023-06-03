@@ -5,10 +5,14 @@ class Alarm : public drogon::HttpController<Alarm>
 {
 public:
     METHOD_LIST_BEGIN
+        METHOD_ADD(Alarm::GetAllAlarms, "/", drogon::Get);
         METHOD_ADD(Alarm::Clear, "/clear", drogon::Post);
     METHOD_LIST_END
 
 public:
+    void GetAllAlarms(const drogon::HttpRequestPtr& req,
+               std::function<void(const drogon::HttpResponsePtr&)>&& callback);
+
     void Clear(const drogon::HttpRequestPtr& req,
                std::function<void (const drogon::HttpResponsePtr&)>&& callback);
 
