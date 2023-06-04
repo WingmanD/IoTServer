@@ -35,14 +35,14 @@ set(BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
 add_custom_command(
     TARGET Server POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory ${SOURCE_DIR}/Server/views ${BUILD_DIR}/views
-    COMMAND ${CMAKE_COMMAND} -E copy_directory ${SOURCE_DIR}/Server/static ${BUILD_DIR}/static
-    COMMAND ${CMAKE_COMMAND} -E copy ${SOURCE_DIR}/Server/config.json ${BUILD_DIR}/
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${SOURCE_DIR}/Server/views ${BUILD_DIR}/bin/views
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${SOURCE_DIR}/Server/static ${BUILD_DIR}/bin/static
+    COMMAND ${CMAKE_COMMAND} -E copy ${SOURCE_DIR}/Server/config.json ${BUILD_DIR}/bin
     DEPENDS ${SOURCE_DIR}/Server/views ${SOURCE_DIR}/Server/static ${SOURCE_DIR}/Server/config.json
 )
 
 add_custom_target(run
-    COMMAND ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}
-    DEPENDS ${PROJECT_NAME}
-    COMMENT "Running ${PROJECT_NAME}"
+    COMMAND ${CMAKE_CURRENT_BINARY_DIR}/Server
+    DEPENDS Server
+    COMMENT "Running Server..."
 )
