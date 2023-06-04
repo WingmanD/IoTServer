@@ -142,8 +142,10 @@ void Measurements::PostDeviceStatus(const drogon::HttpRequestPtr& req, std::func
         return;
     }
 
+    const std::string active = req->getParameter("active");
+    
     Json::Value attributes;
-    attributes["active"] = req->getParameter("active");
+    attributes["active"] = active == "false" ? false : true;
     
     const drogon::HttpStatusCode attributeValues = Util::PostDeviceAttributes(cookies["jwt"], Util::VirtualDeviceAccessToken, attributes);
     

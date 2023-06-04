@@ -194,18 +194,16 @@ Util::TBResult Util::GetDeviceAttributes(const std::string& token, const std::st
     return resp->getJsonObject() ? *resp->getJsonObject() : Json::Value();
 }
 
-drogon::HttpStatusCode Util::PostDeviceAttributes(const std::string& token, const std::string& deviceAccessToken,
-                                                  const Json::Value& attributes)
+drogon::HttpStatusCode Util::PostDeviceAttributes(const std::string& token, const std::string& deviceAccessToken, const Json::Value& attributes)
 {
     if (token.empty() || deviceAccessToken.empty() || attributes.empty())
     {
         return drogon::HttpStatusCode::k400BadRequest;
     }
 
-    const drogon::HttpRequestPtr request = drogon::HttpRequest::newHttpRequest();
+    const drogon::HttpRequestPtr request = drogon::HttpRequest::newHttpJsonRequest(attributes);
     request->setMethod(drogon::HttpMethod::Post);
     request->setPath(fmt::format("/api/v1/{}/attributes", deviceAccessToken));
-    request->setBody(attributes.toStyledString());
     request->addHeader("X-Authorization", "Bearer " + token);
 
     const auto client = drogon::HttpClient::newHttpClient(ThingsBoardHost);
