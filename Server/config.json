@@ -99,7 +99,7 @@
 
     ],
     "ssl": {
-        "cert": "bin/certificate/server.crt",
+        "cert": "bin/certificate/certificate.crt",
         "key": "bin/certificate/private.key",
         "conf":[
             ["Options", "Compression"],
