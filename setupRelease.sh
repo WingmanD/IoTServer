@@ -6,7 +6,7 @@ mkdir -p "$BUILD_PATH/build"
 
 cd "$BUILD_PATH/build"
 
-conan install .. --build=missing -s cppstd=20 -s build_type=Release
+conan install .. --build=missing -s cppstd=23 -s build_type=Release
 
 cmake .. -G "Unix Makefiles" .
 
