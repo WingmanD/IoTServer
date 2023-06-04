@@ -14,14 +14,13 @@ void Alarm::GetAllAlarms(const drogon::HttpRequestPtr& req, std::function<void(c
         return;
     }
 
-    const Json::Value alarms = Util::GetDeviceAlarms(cookies["jwt"], Util::SensorDeviceId);
-    if (alarms.empty())
+    const auto& result = Util::GetDeviceAlarms(cookies["jwt"], Util::SensorDeviceId);
+    if (!Util::Verify(result, callback))
     {
-        const auto response = drogon::HttpResponse::newHttpResponse();
-        response->setStatusCode(drogon::HttpStatusCode::k500InternalServerError);
-        callback(response);
         return;
     }
+
+    const Json::Value& alarms = *result;
 
     const auto response = drogon::HttpResponse::newHttpJsonResponse(alarms);
     callback(response);

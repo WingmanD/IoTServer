@@ -13,14 +13,13 @@ void Measurements::GetAllMeasurements(const drogon::HttpRequestPtr& req, std::fu
         return;
     }
     
-    const Json::Value telemetry = Util::GetDeviceTelemetry(cookies["jwt"], Util::SensorDeviceId, "temperature,humidity");
-    if (telemetry.empty())
+    const auto result = Util::GetDeviceTelemetry(cookies["jwt"], Util::SensorDeviceId, "temperature,humidity");
+    if (!Util::Verify(result, callback))
     {
-        const auto response = drogon::HttpResponse::newHttpResponse();
-        response->setStatusCode(drogon::HttpStatusCode::k500InternalServerError);
-        callback(response);
         return;
     }
+
+    const Json::Value& telemetry = *result;
     
     const auto response = drogon::HttpResponse::newHttpJsonResponse(telemetry);
     callback(response);
@@ -39,14 +38,13 @@ void Measurements::GetAttributes(const drogon::HttpRequestPtr& req, std::functio
 
     const std::string attributes = req->getParameter("attr");
     
-    const Json::Value attributeValues = Util::GetDeviceAttributes(cookies["jwt"], Util::VirtualDeviceAccessToken, attributes);
-    if (attributeValues.empty())
+    const auto result = Util::GetDeviceAttributes(cookies["jwt"], Util::VirtualDeviceAccessToken, attributes);
+    if (!Util::Verify(result, callback))
     {
-        const auto response = drogon::HttpResponse::newHttpResponse();
-        response->setStatusCode(drogon::HttpStatusCode::k500InternalServerError);
-        callback(response);
         return;
     }
+
+    const Json::Value& attributeValues = *result;
     
     const auto response = drogon::HttpResponse::newHttpJsonResponse(attributeValues);
     callback(response);
@@ -71,16 +69,10 @@ void Measurements::PostAttributes(const drogon::HttpRequestPtr& req, std::functi
         return;
     }
     
-    const Json::Value attributeValues = Util::PostDeviceAttributes(cookies["jwt"], Util::VirtualDeviceAccessToken, req->getJsonObject().get());
-    if (attributeValues.empty())
-    {
-        const auto response = drogon::HttpResponse::newHttpResponse();
-        response->setStatusCode(drogon::HttpStatusCode::k500InternalServerError);
-        callback(response);
-        return;
-    }
+    const drogon::HttpStatusCode result = Util::PostDeviceAttributes(cookies["jwt"], Util::VirtualDeviceAccessToken, req->getJsonObject().get());
     
-    const auto response = drogon::HttpResponse::newHttpJsonResponse(attributeValues);
+    const auto response = drogon::HttpResponse::newHttpResponse();
+    response->setStatusCode(result);
     callback(response);
 }
 
@@ -95,23 +87,21 @@ void Measurements::GetDeviceStatus(const drogon::HttpRequestPtr& req, std::funct
         return;
     }
     
-    Json::Value attributeValues = Util::GetDeviceAttributes(cookies["jwt"], Util::VirtualDeviceAccessToken, "active");
-    if (attributeValues.empty())
+    const auto& attributesResult = Util::GetDeviceAttributes(cookies["jwt"], Util::VirtualDeviceAccessToken, "active");
+    if (!Util::Verify(attributesResult, callback))
     {
-        const auto response = drogon::HttpResponse::newHttpResponse();
-        response->setStatusCode(drogon::HttpStatusCode::k500InternalServerError);
-        callback(response);
         return;
     }
 
-    const Json::Value telemetry = Util::GetDeviceCurrentTelemetry(cookies["jwt"], Util::SensorDeviceId, "temperature");
-    if (telemetry.empty())
+    Json::Value attributeValues = *attributesResult;
+
+    const auto& telemetryResult = Util::GetDeviceCurrentTelemetry(cookies["jwt"], Util::SensorDeviceId, "temperature");
+    if (!Util::Verify(telemetryResult, callback))
     {
-        const auto response = drogon::HttpResponse::newHttpResponse();
-        response->setStatusCode(drogon::HttpStatusCode::k500InternalServerError);
-        callback(response);
         return;
     }
+
+    const Json::Value& telemetry = *telemetryResult;
 
     const std::string temp = telemetry["temperature"][0]["value"].asString();
     const int temperature = std::stoi(temp);
@@ -133,14 +123,13 @@ void Measurements::PostDeviceStatus(const drogon::HttpRequestPtr& req, std::func
         return;
     }
 
-    const Json::Value telemetry = Util::GetDeviceCurrentTelemetry(cookies["jwt"], Util::SensorDeviceId, "temperature");
-    if (telemetry.empty())
+    const auto& result = Util::GetDeviceCurrentTelemetry(cookies["jwt"], Util::SensorDeviceId, "temperature");
+    if (!Util::Verify(result, callback))
     {
-        const auto response = drogon::HttpResponse::newHttpResponse();
-        response->setStatusCode(drogon::HttpStatusCode::k500InternalServerError);
-        callback(response);
         return;
     }
+
+    const auto& telemetry = *result;
 
     const std::string temp = telemetry["temperature"][0]["value"].asString();
     const int temperature = std::stoi(temp);

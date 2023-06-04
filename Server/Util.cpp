@@ -35,7 +35,7 @@ std::expected<std::string, drogon::HttpStatusCode> Util::Login(const std::string
     {
         return std::unexpected(drogon::HttpStatusCode::k400BadRequest);
     }
-    
+
     const auto client = drogon::HttpClient::newHttpClient(ThingsBoardHost);
 
     Json::Value requestJson;
@@ -47,10 +47,9 @@ std::expected<std::string, drogon::HttpStatusCode> Util::Login(const std::string
     request->setPath("/api/auth/login");
 
     const auto respPair = client->sendRequest(request);
-    const auto reqResult = respPair.first;
     const auto& resp = respPair.second;
 
-    if (reqResult != drogon::ReqResult::Ok)
+    if (resp->statusCode() != drogon::HttpStatusCode::k200OK)
     {
         return std::unexpected(resp->getStatusCode());
     }
@@ -60,11 +59,11 @@ std::expected<std::string, drogon::HttpStatusCode> Util::Login(const std::string
     return loginResponseJson["token"].asString();
 }
 
-Json::Value Util::GetDeviceTelemetry(const std::string& token, const std::string& deviceId, const std::string& keys)
+Util::TBResult Util::GetDeviceTelemetry(const std::string& token, const std::string& deviceId, const std::string& keys)
 {
     if (token.empty() || deviceId.empty())
     {
-        return {};
+        return std::unexpected(drogon::HttpStatusCode::k400BadRequest);
     }
 
     constexpr int64_t startTs = 0;
@@ -78,21 +77,29 @@ Json::Value Util::GetDeviceTelemetry(const std::string& token, const std::string
 
     const drogon::HttpRequestPtr request = drogon::HttpRequest::newHttpRequest();
     request->setMethod(drogon::HttpMethod::Get);
-    request->setPath(fmt::format("/api/plugins/telemetry/DEVICE/{}/values/timeseries?keys={}&startTs={}&endTs={}&limit={}&agg=NONE", deviceId, keys, startTs, endTs, limit));
+    request->setPath(fmt::format(
+        "/api/plugins/telemetry/DEVICE/{}/values/timeseries?keys={}&startTs={}&endTs={}&limit={}&agg=NONE",
+        deviceId, keys, startTs, endTs, limit));
     request->addHeader("X-Authorization", "Bearer " + token);
 
     const auto client = drogon::HttpClient::newHttpClient(ThingsBoardHost);
     const auto respPair = client->sendRequest(request);
     const auto& resp = respPair.second;
 
+    if (resp->statusCode() != drogon::HttpStatusCode::k200OK)
+    {
+        return std::unexpected(resp->getStatusCode());
+    }
+
     return resp->getJsonObject() ? *resp->getJsonObject() : Json::Value();
 }
 
-Json::Value Util::GetDeviceCurrentTelemetry(const std::string& token, const std::string& deviceId,const std::string& keys)
+Util::TBResult Util::GetDeviceCurrentTelemetry(const std::string& token, const std::string& deviceId,
+                                               const std::string& keys)
 {
     if (token.empty() || deviceId.empty())
     {
-        return {};
+        return std::unexpected(drogon::HttpStatusCode::k400BadRequest);
     }
 
     const drogon::HttpRequestPtr request = drogon::HttpRequest::newHttpRequest();
@@ -104,19 +111,24 @@ Json::Value Util::GetDeviceCurrentTelemetry(const std::string& token, const std:
     const auto respPair = client->sendRequest(request);
     const auto& resp = respPair.second;
 
+    if (resp->statusCode() != drogon::HttpStatusCode::k200OK)
+    {
+        return std::unexpected(resp->getStatusCode());
+    }
+
     return resp->getJsonObject() ? *resp->getJsonObject() : Json::Value();
 }
 
-Json::Value Util::GetDeviceAlarms(const std::string& token, const std::string& deviceId)
+Util::TBResult Util::GetDeviceAlarms(const std::string& token, const std::string& deviceId)
 {
     if (token.empty() || deviceId.empty())
     {
-        return {};
+        return std::unexpected(drogon::HttpStatusCode::k400BadRequest);
     }
 
     constexpr int pageSize = 10;
     constexpr int page = 0;
-    
+
     const drogon::HttpRequestPtr request = drogon::HttpRequest::newHttpRequest();
     request->setMethod(drogon::HttpMethod::Get);
     request->setPath(fmt::format("/api/alarm/DEVICE/{}?pageSize={}&page={}", deviceId, pageSize, page));
@@ -126,16 +138,22 @@ Json::Value Util::GetDeviceAlarms(const std::string& token, const std::string& d
     const auto respPair = client->sendRequest(request);
     const auto& resp = respPair.second;
 
+    if (resp->statusCode() != drogon::HttpStatusCode::k200OK)
+    {
+        return std::unexpected(resp->getStatusCode());
+    }
+
     return resp->getJsonObject() ? *resp->getJsonObject() : Json::Value();
 }
 
-Json::Value Util::GetDeviceAttributes(const std::string& token, const std::string& deviceAccessToken, const std::string& attributes)
+Util::TBResult Util::GetDeviceAttributes(const std::string& token, const std::string& deviceAccessToken,
+                                         const std::string& attributes)
 {
     if (token.empty() || deviceAccessToken.empty() || attributes.empty())
     {
-        return {};
+        return std::unexpected(drogon::HttpStatusCode::k400BadRequest);
     }
-    
+
     const drogon::HttpRequestPtr request = drogon::HttpRequest::newHttpRequest();
     request->setMethod(drogon::HttpMethod::Get);
     request->setPath(fmt::format("/api/v1/{}/attributes?clientKeys={}&sharedKeys=-", deviceAccessToken, attributes));
@@ -145,10 +163,16 @@ Json::Value Util::GetDeviceAttributes(const std::string& token, const std::strin
     const auto respPair = client->sendRequest(request);
     const auto& resp = respPair.second;
 
+    if (resp->statusCode() != drogon::HttpStatusCode::k200OK)
+    {
+        return std::unexpected(resp->getStatusCode());
+    }
+
     return resp->getJsonObject() ? *resp->getJsonObject() : Json::Value();
 }
 
-drogon::HttpStatusCode Util::PostDeviceAttributes(const std::string& token, const std::string& deviceAccessToken, const Json::Value& attributes)
+drogon::HttpStatusCode Util::PostDeviceAttributes(const std::string& token, const std::string& deviceAccessToken,
+                                                  const Json::Value& attributes)
 {
     if (token.empty() || deviceAccessToken.empty() || attributes.empty())
     {
@@ -164,6 +188,29 @@ drogon::HttpStatusCode Util::PostDeviceAttributes(const std::string& token, cons
     const auto client = drogon::HttpClient::newHttpClient(ThingsBoardHost);
     const auto respPair = client->sendRequest(request);
     const auto& resp = respPair.second;
-    
+
     return resp->statusCode();
+}
+
+bool Util::Verify(const TBResult& result, const std::function<void(const drogon::HttpResponsePtr&)>& callback)
+{
+    if (!result.has_value())
+    {
+        if (result.error() == drogon::HttpStatusCode::k401Unauthorized)
+        {
+            const auto resp = drogon::HttpResponse::newRedirectionResponse("/auth/login");
+            resp->setStatusCode(drogon::HttpStatusCode::k401Unauthorized);
+            callback(resp);
+        }
+        else
+        {
+            const auto resp = drogon::HttpResponse::newHttpResponse();
+            resp->setStatusCode(result.error());
+            callback(resp);
+        }
+        
+        return false;
+    }
+
+    return true;
 }

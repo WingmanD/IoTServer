@@ -11,7 +11,7 @@
         "enable_session": true,
         "session_timeout": 1200,
         "session_same_site" : "Strict",
-        "document_root": "static",
+        "document_root": "bin/static",
         "home_page": "index.html",
         "use_implicit_page": true,
         "implicit_page": "index.html",

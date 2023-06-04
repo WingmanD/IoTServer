@@ -23,6 +23,8 @@ std::string home::genText(const DrTemplateData& home_view_data)
  
     auto params = home_view_data.get<std::unordered_map<std::string,std::string>>("params");
     auto username = home_view_data.get<std::string>("username");
+	home_tmp_stream << "<!DOCTYPE html>\n";
+	home_tmp_stream << "<html lang=\"en\">\n";
 	home_tmp_stream << "<head>\n";
 	home_tmp_stream << "    <meta charset=\"UTF-8\">\n";
 	home_tmp_stream << "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n";
