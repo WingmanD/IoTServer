@@ -52,7 +52,7 @@
     <br>
     <h2>Alarms</h2>
     <br>
-    <div class="row">
+    <div class="row" id="alErrorRow">
         <span id="alError"></span>
     </div>
     <div class="row align-items-center" id="alarmBase">
