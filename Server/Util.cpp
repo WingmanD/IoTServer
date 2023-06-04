@@ -59,6 +59,30 @@ std::expected<std::string, drogon::HttpStatusCode> Util::Login(const std::string
     return loginResponseJson["token"].asString();
 }
 
+std::expected<Json::Value, drogon::HttpStatusCode> Util::CheckAuth(const std::string& token)
+{
+    if (token.empty())
+    {
+        return std::unexpected(drogon::HttpStatusCode::k400BadRequest);
+    }
+
+    const drogon::HttpRequestPtr request = drogon::HttpRequest::newHttpRequest();
+    request->setMethod(drogon::HttpMethod::Get);
+    request->setPath(fmt::format("/api/auth/user"));
+    request->addHeader("X-Authorization", "Bearer " + token);
+
+    const auto client = drogon::HttpClient::newHttpClient(ThingsBoardHost);
+    const auto respPair = client->sendRequest(request);
+    const auto& resp = respPair.second;
+
+    if (resp->statusCode() != drogon::HttpStatusCode::k200OK)
+    {
+        return std::unexpected(resp->getStatusCode());
+    }
+
+    return resp->getJsonObject() ? *resp->getJsonObject() : Json::Value();
+}
+
 Util::TBResult Util::GetDeviceTelemetry(const std::string& token, const std::string& deviceId, const std::string& keys)
 {
     if (token.empty() || deviceId.empty())
@@ -94,8 +118,7 @@ Util::TBResult Util::GetDeviceTelemetry(const std::string& token, const std::str
     return resp->getJsonObject() ? *resp->getJsonObject() : Json::Value();
 }
 
-Util::TBResult Util::GetDeviceCurrentTelemetry(const std::string& token, const std::string& deviceId,
-                                               const std::string& keys)
+Util::TBResult Util::GetDeviceCurrentTelemetry(const std::string& token, const std::string& deviceId, const std::string& keys)
 {
     if (token.empty() || deviceId.empty())
     {

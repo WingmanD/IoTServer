@@ -19,6 +19,7 @@ public:
     static Json::Value ParseJson(const std::string& text);
     
     static std::expected<std::string, drogon::HttpStatusCode> Login(const std::string& username, const std::string& password);
+    static std::expected<Json::Value, drogon::HttpStatusCode> CheckAuth(const std::string& token);
     
     static TBResult GetDeviceTelemetry(const std::string& token, const std::string& deviceId, const std::string& keys);
     static TBResult GetDeviceCurrentTelemetry(const std::string& token, const std::string& deviceId, const std::string& keys);

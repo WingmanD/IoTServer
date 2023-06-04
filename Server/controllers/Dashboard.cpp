@@ -6,13 +6,13 @@ void Dashboard::Home(const drogon::HttpRequestPtr& req, std::function<void(const
     drogon::HttpViewData data;
     
     auto cookies = req->getCookies();
-    if (!cookies.contains("jwt") || !cookies.contains("username"))
+    if (!cookies.contains("jwt") || !cookies.contains("username") || !Util::CheckAuth(cookies["jwt"]).has_value())
     {
         const auto resp = drogon::HttpResponse::newRedirectionResponse("/auth/login");
         callback(resp);
         return;
     }
-
+    
     data.insert("username", cookies["username"]);
     
     const auto resp = drogon::HttpResponse::newHttpViewResponse("home.csp", data);
