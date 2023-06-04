@@ -4,8 +4,10 @@ BUILD_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 mkdir -p "$BUILD_PATH/build"
 
-conan install . --build=missing -s cppstd=20 -s build_type=Release
+cd "$BUILD_PATH/build"
 
-cmake -G "Unix Makefiles" .
+conan install .. --build=missing -s cppstd=20 -s build_type=Release
+
+cmake .. -G "Unix Makefiles" .
 
 cmake --build . --config Release
