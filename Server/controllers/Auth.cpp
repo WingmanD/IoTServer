@@ -24,8 +24,7 @@ void Auth::PostLogin(const drogon::HttpRequestPtr& req,
     const auto loginResult = Util::Login(username, password);
     if (!loginResult.has_value())
     {
-        const auto resp = drogon::HttpResponse::newHttpResponse();
-        resp->setStatusCode(loginResult.error());
+        const auto resp = drogon::HttpResponse::newRedirectionResponse("/auth/login");
         callback(resp);
         return;
     }
@@ -34,8 +33,7 @@ void Auth::PostLogin(const drogon::HttpRequestPtr& req,
 
     if (token.empty())
     {
-        const auto resp = drogon::HttpResponse::newHttpResponse();
-        resp->setStatusCode(drogon::HttpStatusCode::k401Unauthorized);
+        const auto resp = drogon::HttpResponse::newRedirectionResponse("/auth/login");
         callback(resp);
         return;
     }
