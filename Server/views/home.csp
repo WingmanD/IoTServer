@@ -90,17 +90,35 @@
 </html>
 
 <script>
+async function GET(url) {
+    var res = await fetch(url);
+    if (res.status == 200) return await res.json();
+    else if (res.status == 401) {
+        logout();
+    } else {
+        return {
+            status: "fetch ",
+            errorCode: res.status.toString(),
+            message: `Failed to GET ${url}`
+        };
+    }
+}
+
 async function POST_reload(url) {
     var res = await fetch(url, { method: 'POST' });
     if (res.status == 200) location.reload();
-    else {
-        alert(`${url} returned ${res.status}`);
+    else if (res.status == 401) {
+        alert("Error: Your session has likely expired, please log in again.");
+        logout();
+    } else {
+        alert(`Error: ${url} returned ${res.status}`);
         console.log(res);
     }
 }
 
 async function LoadAlarms() {
-    var alarms = await (await fetch("/alarm/")).json();
+    var alarms = await GET("/alarm/");
+    console.log(alarms);
     var err = document.getElementById("alError");
     var errRow = document.getElementById("alErrorRow");
     var base = document.getElementById("alarmBase");
@@ -135,7 +153,7 @@ async function LoadAlarms() {
 }
 
 async function LoadStatus() {
-    var measurements = await (await fetch("/measurements/status")).json();
+    var measurements = await GET("/measurements/status");
     document.getElementById("devstatus").textContent = measurements.client.active? "🟢 Active" : "🔴 Inactive";
     
     var btn = document.getElementById("devdisable");
@@ -150,7 +168,7 @@ async function LoadStatus() {
 }
 
 async function LoadMeasurements() {
-    var telemetry = await (await fetch("/measurements/")).json();
+    var telemetry = await GET("/measurements/");
     var err = document.getElementById("chError");
 
     if (telemetry.errorCode) {
