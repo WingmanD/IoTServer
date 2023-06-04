@@ -2,10 +2,8 @@
     "listeners": [
         {
             "address": "0.0.0.0",
-            "port": 443,
-            "https": true,
-            "cert": "",
-            "key": ""
+            "port": 80,
+            "https": false
         }
     ],
     "app": {
@@ -98,13 +96,5 @@
     "plugins": [
 
     ],
-    "ssl": {
-        "cert": "bin/certificate/server.crt",
-        "key": "bin/certificate/private.key",
-        "conf":[
-            ["Options", "Compression"],
-            ["min_protocol", "TLSv1.3"]
-        ]
-    },
     "custom_config": {}
 }

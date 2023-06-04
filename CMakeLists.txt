@@ -38,7 +38,9 @@ add_custom_command(
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${SOURCE_DIR}/Server/views ${BUILD_DIR}/bin/views
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${SOURCE_DIR}/Server/static ${BUILD_DIR}/bin/static
     COMMAND ${CMAKE_COMMAND} -E copy ${SOURCE_DIR}/Server/config.json ${BUILD_DIR}/bin
+    COMMAND ${CMAKE_COMMAND} -E copy ${SOURCE_DIR}/Server/configDebug.json ${BUILD_DIR}/bin
     DEPENDS ${SOURCE_DIR}/Server/views ${SOURCE_DIR}/Server/static ${SOURCE_DIR}/Server/config.json
+    DEPENDS ${SOURCE_DIR}/Server/views ${SOURCE_DIR}/Server/static ${SOURCE_DIR}/Server/configDebug.json
 )
 
 add_custom_target(run

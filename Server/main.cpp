@@ -2,7 +2,11 @@
 
 int main(int argc, char* argv[])
 {
+#ifdef _DEBUG
+    drogon::app().loadConfigFile("bin/configDebug.json");
+#else
     drogon::app().loadConfigFile("bin/config.json");
+#endif    
 
     drogon::HttpAppFramework::instance()
         .registerHandler("/",
