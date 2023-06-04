@@ -1,8 +1,8 @@
 # IoTServer
 
 ## Prerequisites
-CMake version 3.22 or newer
-Conan version 1.60.0, version 2.0 is not supported
+1. CMake version 3.22 or newer
+2. Conan version 1.60.0, version 2.0 is not supported
 
 ## Installation
 1. Clone this repository: git clone https://github.com/WingmanD/IoTServer.git
