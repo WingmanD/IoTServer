@@ -29,11 +29,11 @@ Json::Value Util::ParseJson(const std::string& text)
     return json;
 }
 
-std::string Util::Login(const std::string& username, const std::string& password)
+std::expected<std::string, drogon::HttpStatusCode> Util::Login(const std::string& username, const std::string& password)
 {
     if (username.empty() || password.empty())
     {
-        return "";
+        return std::unexpected(drogon::HttpStatusCode::k400BadRequest);
     }
     
     const auto client = drogon::HttpClient::newHttpClient(ThingsBoardHost);
@@ -52,7 +52,7 @@ std::string Util::Login(const std::string& username, const std::string& password
 
     if (reqResult != drogon::ReqResult::Ok)
     {
-        return "";
+        return std::unexpected(resp->getStatusCode());
     }
 
     const Json::Value loginResponseJson = resp->getJsonObject() ? *resp->getJsonObject() : Json::Value();

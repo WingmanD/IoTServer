@@ -20,8 +20,17 @@ void Auth::PostLogin(const drogon::HttpRequestPtr& req,
         callback(resp);
         return;
     }
+    
+    const auto loginResult = Util::Login(username, password);
+    if (!loginResult.has_value())
+    {
+        const auto resp = drogon::HttpResponse::newHttpResponse();
+        resp->setStatusCode(loginResult.error());
+        callback(resp);
+        return;
+    }
 
-    const std::string token = Util::Login(username, password);
+    const std::string& token = *loginResult;
 
     if (token.empty())
     {
