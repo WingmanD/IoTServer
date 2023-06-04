@@ -75,7 +75,7 @@ home_tmp_stream<<username;
 	home_tmp_stream << "    <br>\n";
 	home_tmp_stream << "    <h2>Alarms</h2>\n";
 	home_tmp_stream << "    <br>\n";
-	home_tmp_stream << "    <div class=\"row\">\n";
+	home_tmp_stream << "    <div class=\"row\" id=\"alErrorRow\">\n";
 	home_tmp_stream << "        <span id=\"alError\"></span>\n";
 	home_tmp_stream << "    </div>\n";
 	home_tmp_stream << "    <div class=\"row align-items-center\" id=\"alarmBase\">\n";
