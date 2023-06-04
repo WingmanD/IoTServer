@@ -35,9 +35,9 @@ set(BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
 add_custom_command(
     TARGET Server POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory ${SOURCE_DIR}/Server/views ${BUILD_DIR}/bin/views
-    COMMAND ${CMAKE_COMMAND} -E copy_directory ${SOURCE_DIR}/Server/static ${BUILD_DIR}/bin/static
-    COMMAND ${CMAKE_COMMAND} -E copy ${SOURCE_DIR}/Server/config.json ${BUILD_DIR}/bin
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${SOURCE_DIR}/Server/views ${BUILD_DIR}/views
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${SOURCE_DIR}/Server/static ${BUILD_DIR}/static
+    COMMAND ${CMAKE_COMMAND} -E copy ${SOURCE_DIR}/Server/config.json ${BUILD_DIR}/
     DEPENDS ${SOURCE_DIR}/Server/views ${SOURCE_DIR}/Server/static ${SOURCE_DIR}/Server/config.json
 )
 
